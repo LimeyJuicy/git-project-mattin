@@ -12,7 +12,7 @@ import java.nio.file.Path;
 public class git {
 
     public static void main(String[] args) {
-        // init();
+        init();
 
         // hashfile test
         // try {
@@ -35,6 +35,10 @@ public class git {
             helloWriter.write("Hello World\n");
             helloWriter.close();
             createBlob("Hello.txt");
+            FileWriter byeWriter = new FileWriter("Bye.txt");
+            byeWriter.write("Bye World\n");
+            byeWriter.close();
+            createBlob("Bye.txt");
         } catch (Exception e) {
             System.out.println("File error: " + e.getMessage());
             e.printStackTrace();
@@ -85,15 +89,36 @@ public class git {
     public static void createBlob(String filePath) {
         try {
             String hash = hashFile(filePath);
-            System.out.println(hash); // test line
+            // System.out.println(hash); // test line
             FileWriter blobWriter = new FileWriter("git/objects/" + hash);
             BufferedReader OGFileReader = new BufferedReader(new FileReader(filePath));
             String blob = OGFileReader.readLine();
-            System.out.println(blob); // test line
+            // System.out.println(blob); // test line
             OGFileReader.close();
 
             blobWriter.write(blob);
             blobWriter.close();
+            updateIndex(filePath);
+        } catch (IOException e) {
+            System.out.println("File error: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    public static void updateIndex(String filePath) {
+        try {
+            String hash = hashFile(filePath);
+            FileWriter indexWriter = new FileWriter("git/index", true);
+            System.out.println(hash + " " + filePath);
+            BufferedReader indexReader = new BufferedReader(new FileReader("git/index"));
+            if (indexReader.readLine() != null)
+                 indexWriter.write("\n" + hash + " " + filePath);
+            else 
+                 indexWriter.write(hash + " " + filePath);
+
+            indexReader.close();
+            indexWriter.close();
+
         } catch (IOException e) {
             System.out.println("File error: " + e.getMessage());
             e.printStackTrace();
