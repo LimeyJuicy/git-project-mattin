@@ -15,36 +15,49 @@ public class git {
         // init();
 
         // hashfile test
+        // try {
+        // FileWriter helloWriter = new FileWriter("Hello.txt");
+        // helloWriter.write("Hello World\n");
+        // helloWriter.close();
+
+        // BufferedReader helloReader = new BufferedReader(new FileReader("Hello.txt"));
+        // String hello = helloReader.readLine();
+        // helloReader.close();
+        // System.out.println("hello.txt: " + hello);
+
+        // System.out.println(hashFile("hello.txt"));
+        // } catch (IOException e) {
+        // System.out.println("File error: " + e.getMessage());
+        // }
+
         try {
             FileWriter helloWriter = new FileWriter("Hello.txt");
             helloWriter.write("Hello World\n");
             helloWriter.close();
-
-            BufferedReader helloReader = new BufferedReader(new FileReader("Hello.txt"));
-            String hello = helloReader.readLine();
-            helloReader.close();
-            System.out.println("hello.txt: " + hello);
-
-            System.out.println(hashFile("hello.txt"));
-        } catch (IOException e) {
+            createBlob("Hello.txt");
+        } catch (Exception e) {
             System.out.println("File error: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
     public static void init() {
         try {
             File gitDir = new File("git");
-            if (gitDir.exists()) throw new IOException("Git directory exists");
+            if (gitDir.exists())
+                throw new IOException("Git directory exists");
             gitDir.mkdirs();
 
             File objectsDir = new File("git/Objects");
             objectsDir.mkdirs();
 
             File index = new File("git/index");
-            if (!index.exists()) index.createNewFile();
+            if (!index.exists())
+                index.createNewFile();
 
             File head = new File("git/HEAD");
-            if (!head.exists()) head.createNewFile();
+            if (!head.exists())
+                head.createNewFile();
 
         } catch (IOException e) {
             System.out.println("File error: " + e.getMessage());
@@ -67,5 +80,23 @@ public class git {
         }
         byte[] hash = digest.digest(fileBytes);
         return HexFormat.of().formatHex(hash);
+    }
+
+    public static void createBlob(String filePath) {
+        try {
+            String hash = hashFile(filePath);
+            System.out.println(hash); // test line
+            FileWriter blobWriter = new FileWriter("git/objects/" + hash);
+            BufferedReader OGFileReader = new BufferedReader(new FileReader(filePath));
+            String blob = OGFileReader.readLine();
+            System.out.println(blob); // test line
+            OGFileReader.close();
+
+            blobWriter.write(blob);
+            blobWriter.close();
+        } catch (IOException e) {
+            System.out.println("File error: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 }
