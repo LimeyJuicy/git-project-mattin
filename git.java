@@ -31,14 +31,16 @@ public class git {
         // }
 
         try {
-            FileWriter helloWriter = new FileWriter("Hello.txt");
+            FileWriter helloWriter = new FileWriter("myProgram/Hello.txt");
             helloWriter.write("Hello World\n");
             helloWriter.close();
             createBlob("Hello.txt");
-            FileWriter byeWriter = new FileWriter("Bye.txt");
+            FileWriter byeWriter = new FileWriter("myProgram/Bye.txt");
             byeWriter.write("Bye World\n");
             byeWriter.close();
             createBlob("Bye.txt");
+            updateIndex("myProgram/Bye.txt");
+            updateIndex("myProgram/Hello.txt");
         } catch (Exception e) {
             System.out.println("File error: " + e.getMessage());
             e.printStackTrace();
@@ -108,16 +110,46 @@ public class git {
     public static void updateIndex(String filePath) {
         try {
             String hash = hashFile(filePath);
-            FileWriter indexWriter = new FileWriter("git/index", true);
-            System.out.println(hash + " " + filePath);
+            String relativePath = filePath;
+            String entry = hash + " " + filePath;
+            boolean hasEntries = false;
+            boolean duplicate = false;
+
             BufferedReader indexReader = new BufferedReader(new FileReader("git/index"));
-            if (indexReader.readLine() != null)
-                 indexWriter.write("\n" + hash + " " + filePath);
-            else 
-                 indexWriter.write(hash + " " + filePath);
+            String line = "";
+            String newIndex = "";
+
+            while (line != null) {
+                line = indexReader.readLine();
+
+                if (line != null) {
+                    hasEntries = true;
+
+                    if (line.equals(entry)) {
+                        duplicate = true;
+                    }
+                    if (line.endsWith(" " + relativePath) == false) { 
+                        if (newIndex.equals("") == false) {
+                            newIndex = newIndex + "\n"; 
+                        }
+                        newIndex = newIndex + line;
+                    }
+                }
+            }
 
             indexReader.close();
-            indexWriter.close();
+
+            if (duplicate == false) {
+                FileWriter indexWriter = new FileWriter("git/index", true);
+                System.out.println(entry);
+
+                if (hasEntries == true) {
+                    indexWriter.write("\n");
+                }
+
+                indexWriter.write(entry);
+                indexWriter.close();
+            }
 
         } catch (IOException e) {
             System.out.println("File error: " + e.getMessage());
