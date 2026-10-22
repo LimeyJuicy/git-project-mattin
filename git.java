@@ -50,6 +50,10 @@ public class git {
             String secondHash = createTree(workingList, "myProgram/docs");
             System.out.println("Second tree hash: " + secondHash);
 
+            // tajs other test
+            String rootHash = buildRootTree();
+            System.out.println("Root tree hash: " + rootHash);
+
         } catch (Exception e) {
             System.out.println("File error: " + e.getMessage());
             e.printStackTrace();
@@ -227,6 +231,170 @@ public class git {
             e.printStackTrace();
             return "";
         }
+    }
+
+    public static String buildRootTree() {
+        try {
+            // Step 1: Read the index into a working list.
+            String[] workingList = new String[1000];
+            int count = 0;
+
+            BufferedReader reader = new BufferedReader(new FileReader("git/index"));
+
+            String line;
+
+            while ((line = reader.readLine()) != null) {
+                if (line.trim().isEmpty()) {
+                    continue;
+                }
+
+                int space = line.indexOf(' ');
+                String hash = line.substring(0, space);
+                String path = line.substring(space + 1).trim();
+
+                workingList[count] = "blob " + hash + " " + path;
+                count++;
+            }
+
+            reader.close();
+
+            // Step 2: Sort the working list alphabetically by path.
+            for (int i = 0; i < count - 1; i++) {
+                for (int j = i + 1; j < count; j++) {
+                    String path1 = getPath(workingList[i]);
+                    String path2 = getPath(workingList[j]);
+
+                    if (path1.compareTo(path2) > 0) {
+                        String temp = workingList[i];
+                        workingList[i] = workingList[j];
+                        workingList[j] = temp;
+                    }
+                }
+            }
+
+            // Step 3: Keep processing directories until
+            // every entry belongs directly to the root.
+            while (true) {
+                String deepestDirectory = "";
+                int deepestLevel = 0;
+
+                for (int i = 0; i < count; i++) {
+                    String path = getPath(workingList[i]);
+                    int slash = path.lastIndexOf('/');
+
+                    if (slash != -1) {
+                        String parent = path.substring(0, slash);
+
+                        int level = 1;
+                        for (int j = 0; j < parent.length(); j++) {
+                            if (parent.charAt(j) == '/') {
+                                level++;
+                            }
+                        }
+
+                        if (level > deepestLevel) {
+                            deepestLevel = level;
+                            deepestDirectory = parent;
+                        }
+                    }
+                }
+
+                // No directories remain to process.
+                if (deepestDirectory.equals("")) {
+                    break;
+                }
+
+                // Create the tree for the deepest directory.
+                String treeHash = createTree(
+                        makeWorkingListString(workingList, count),
+                        deepestDirectory);
+
+                if (treeHash.equals("")) {
+                    throw new IOException(
+                            "Could not create tree: " + deepestDirectory);
+                }
+
+                // Step 4: Remove direct children of this directory.
+                int i = 0;
+
+                while (i < count) {
+                    String path = getPath(workingList[i]);
+                    int slash = path.lastIndexOf('/');
+
+                    String parent = "";
+
+                    if (slash != -1) {
+                        parent = path.substring(0, slash);
+                    }
+
+                    if (parent.equals(deepestDirectory)) {
+                        // Shift all later entries one position left.
+                        for (int j = i; j < count - 1; j++) {
+                            workingList[j] = workingList[j + 1];
+                        }
+
+                        count--;
+                    } else {
+                        i++;
+                    }
+                }
+
+                // Add the new tree entry.
+                workingList[count] = "tree " + treeHash + " " + deepestDirectory;
+                count++;
+
+                // Sort again after collapsing the directory.
+                for (int a = 0; a < count - 1; a++) {
+                    for (int b = a + 1; b < count; b++) {
+                        String path1 = getPath(workingList[a]);
+                        String path2 = getPath(workingList[b]);
+
+                        if (path1.compareTo(path2) > 0) {
+                            String temp = workingList[a];
+                            workingList[a] = workingList[b];
+                            workingList[b] = temp;
+                        }
+                    }
+                }
+            }
+
+            // Step 5: Build the root tree.
+            String rootHash = createTree(
+                    makeWorkingListString(workingList, count), "");
+
+            return rootHash;
+
+        } catch (IOException e) {
+            System.out.println("Error: " + e.getMessage());
+            e.printStackTrace();
+            return "";
+        }
+    }
+
+    // Gets the path portion of a working-list entry.
+    public static String getPath(String entry) {
+        int firstSpace = entry.indexOf(' ');
+        int secondSpace = entry.indexOf(' ', firstSpace + 1);
+
+        return entry.substring(secondSpace + 1);
+    }
+
+    // Converts the array into the newline-separated string
+    // expected by createTree().
+    public static String makeWorkingListString(
+            String[] workingList, int count) {
+
+        String result = "";
+
+        for (int i = 0; i < count; i++) {
+            if (i > 0) {
+                result += "\n";
+            }
+
+            result += workingList[i];
+        }
+
+        return result;
     }
 
 }
