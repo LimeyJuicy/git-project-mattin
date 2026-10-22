@@ -121,56 +121,59 @@ public class git {
     }
 
     public static void updateIndex(String filePath) {
-        try {
-            String hash = hashFile(filePath);
-            String relativePath = filePath;
-            String entry = hash + " " + filePath;
-            boolean hasEntries = false;
-            boolean duplicate = false;
+    try {
+        String hash = hashFile(filePath);
+        String relativePath = filePath;
+        String entry = hash + " " + relativePath;
 
-            BufferedReader indexReader = new BufferedReader(new FileReader("git/index"));
-            if (indexReader.readLine() != null)
-                indexWriter.write("\n" + hash + " " + filePath);
-            else
-                indexWriter.write(hash + " " + filePath);
+        boolean hasEntries = false;
+        boolean duplicate = false;
 
-            while (line != null) {
-                line = indexReader.readLine();
+        String line;
+        String newIndex = "";
 
-                if (line != null) {
-                    hasEntries = true;
+        BufferedReader indexReader =
+                new BufferedReader(new FileReader("git/index"));
 
-                    if (line.equals(entry)) {
-                        duplicate = true;
-                    }
-                    if (line.endsWith(" " + relativePath) == false) { 
-                        if (newIndex.equals("") == false) {
-                            newIndex = newIndex + "\n"; 
-                        }
-                        newIndex = newIndex + line;
-                    }
-                }
+        while ((line = indexReader.readLine()) != null) {
+            hasEntries = true;
+
+            if (line.equals(entry)) {
+                duplicate = true;
             }
 
-            indexReader.close();
-
-            if (duplicate == false) {
-                FileWriter indexWriter = new FileWriter("git/index", true);
-                System.out.println(entry);
-
-                if (hasEntries == true) {
-                    indexWriter.write("\n");
+            // Preserve entries for other file paths.
+            if (!line.endsWith(" " + relativePath)) {
+                if (!newIndex.isEmpty()) {
+                    newIndex += "\n";
                 }
-
-                indexWriter.write(entry);
-                indexWriter.close();
+                newIndex += line;
             }
-
-        } catch (IOException e) {
-            System.out.println("File error: " + e.getMessage());
-            e.printStackTrace();
         }
+
+        indexReader.close();
+
+        if (!duplicate) {
+            if (!newIndex.isEmpty()) {
+                newIndex += "\n";
+            }
+            newIndex += entry;
+        }
+
+        // Rewrite the index with the updated contents.
+        FileWriter indexWriter = new FileWriter("git/index", false);
+        indexWriter.write(newIndex);
+        indexWriter.close();
+
+        if (!duplicate) {
+            System.out.println(entry);
+        }
+
+    } catch (IOException e) {
+        System.out.println("File error: " + e.getMessage());
+        e.printStackTrace();
     }
+}
 
     public static String createTree(String workingList, String dirPath) {
         try {
