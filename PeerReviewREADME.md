@@ -72,3 +72,26 @@ Is the hash right?
         -Yes
 How many blobs exist?
         -2
+
+
+What does createTree do?
+-Splits the working list into individual lines.
+-Separates each line into its type, hash, and path.
+-Checks whether the entry's parent directory exactly matches dirPath.
+-Extracts just the filename or subdirectory name.
+-Builds the tree content, keeping each entry's type and hash.
+-Writes that content to a temporary file so your existing hashFile() method can calculate its SHA-1 hash.
+-Saves the tree content in git/objects/ using that hash as the filename.
+-Returns the hash.
+
+
+buildRootTree guide:
+-Create the working list by reading the index file and putting blob before each entry.
+-Arrange the working list: it arranges the entries in alphabetical order according to their file paths.
+-Locate the deepest directory: this means identifying the directory that is deepest and still requires a tree.
+-Build a tree: The Calls function calls createTree() in order to write the tree file of the directory to git/objects/ and obtain its SHA-1 hash.
+-Replace the directory's entries with a single tree entry that includes its hash and path.
+-Re-order the list of items to do: after each directory is collapsed, it sorts the entries that have been updated.
+-Carry out the process: keep generating trees starting from the deepest directories and working your way up until only those at the root level are left.
+-Set up the root tree: The Calls function call createTree() in order to set up the final root tree with the remaining files and directories.
+-Supply the root hash: this means returning the SHA-1 hash of the root tree so that the commit() method in Part 4 can use it. 
