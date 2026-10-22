@@ -72,3 +72,14 @@ Is the hash right?
         -Yes
 How many blobs exist?
         -2
+
+
+What does createTree do?
+-Splits the working list into individual lines.
+-Separates each line into its type, hash, and path.
+-Checks whether the entry's parent directory exactly matches dirPath.
+-Extracts just the filename or subdirectory name.
+-Builds the tree content, keeping each entry's type and hash.
+-Writes that content to a temporary file so your existing hashFile() method can calculate its SHA-1 hash.
+-Saves the tree content in git/objects/ using that hash as the filename.
+-Returns the hash.
